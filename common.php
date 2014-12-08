@@ -8,8 +8,9 @@ class ExampleWorkload {
         $this->myNum = $num;
     }
 
-    public function getMyNum() {
-        return $this->myNum;
+    public function execute() {
+        // Do some stuff
+        return $this->myNum * 2;
     }
 
 }
@@ -28,14 +29,14 @@ class ExampleWorker {
                 continue;
             }
 
-            /** @var ExampleWorkload $object */
-            $object = unserialize($buffer);
+            /** @var ExampleWorkload $workload */
+            $workload = unserialize($buffer);
 
             if ($sleep) {
                 sleep($sleep);
             }
 
-            echo $object->getMyNum();
+            echo $workload->execute();
 
         }
 
@@ -88,6 +89,9 @@ class JobmanClient {
 
     private $version;
 
+    /**
+     * @var callable
+     */
     private $completeFunction;
 
     private $jobsQueued = 0;
@@ -126,36 +130,32 @@ class JobmanClient {
      */
     public function runTasks() {
 
-        $handle = self::getHandle();
-
+        $handle           = self::getHandle();
         $completeFunction = $this->completeFunction;
-
-        $endChar = chr(0x17);
-
-        $response = "";
-
-        $jobsProcessed = 0;
+        $separator        = chr(0x17);
+        $buffer           = "";
+        $jobsProcessed    = 0;
 
         while (true) {
 
-            while ($out = socket_read($handle, 2048)) {
+            while ($data = socket_read($handle, 2048)) {
 
-                $response .= trim($out);
+                $buffer .= trim($data);
 
-                if (strpos($out, $endChar) !== false) {
+                if (strpos($data, $separator) !== false) {
                     break;
                 }
 
             }
 
-            $individualResponses = explode($endChar, $response);
+            $responses = explode($separator, $buffer);
 
-            $response = array_pop($individualResponses);
+            $buffer = array_pop($responses);
 
-            foreach ($individualResponses as $individualResponse) {
+            foreach ($responses as $response) {
 
                 if (is_callable($completeFunction)) {
-                    $completeFunction($individualResponse);
+                    $completeFunction($response);
                 }
 
                 if (++$jobsProcessed == $this->jobsQueued) {
@@ -188,6 +188,8 @@ class JobmanClient {
         if ($result === false) {
             throw new Exception("socket_connect() failed.\nReason: ($result) " . socket_strerror(socket_last_error($socket)));
         }
+
+        echo "Connected to jobman server at: {$host}:{$port}\n";
 
         return $socket;
 

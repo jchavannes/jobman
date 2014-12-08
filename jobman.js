@@ -126,18 +126,12 @@ var WorkerManager = function() {
     /**
      * @type {WorkerProcess[]}
      */
-    this.workers = [];
+    this.workers = {};
 
     /**
-     * @type {{
-     *   queued: {Job[]},
-     *   processing: {Job[]}
-     * }}
+     * @type {Job[]}
      */
-    this.jobs    = {
-        queued: [],
-        processing: []
-    };
+    this.jobsQueued = {};
 
 };
 
@@ -148,11 +142,11 @@ WorkerManager.prototype.queueJob = function(job) {
 
     var queueName = job.getVersion();
 
-    if (typeof this.jobs.queued[queueName] == "undefined") {
-        this.jobs.queued[queueName] = [];
+    if (typeof this.jobsQueued[queueName] == "undefined") {
+        this.jobsQueued[queueName] = [];
     }
 
-    this.jobs.queued[queueName].push(job);
+    this.jobsQueued[queueName].push(job);
 
     this.processQueues();
 
@@ -162,20 +156,18 @@ WorkerManager.prototype.processQueues = function() {
 
     var queueName, i, worker;
 
-    var jobQueues = this.jobs.queued;
-
-    for (queueName in jobQueues) {
-        if (!jobQueues.hasOwnProperty(queueName)) {
+    for (queueName in this.jobsQueued) {
+        if (!this.jobsQueued.hasOwnProperty(queueName)) {
             continue;
         }
-        for (i = 0; i < jobQueues[queueName].length; i++) {
+        for (i = 0; i < this.jobsQueued[queueName].length; i++) {
 
             worker = this.getWorker(queueName);
             if (!worker) {
                 break;
             }
 
-            var job = jobQueues[queueName].splice(i--, 1)[0];
+            var job = this.jobsQueued[queueName].splice(i--, 1)[0];
             worker.processJob(job);
 
         }
