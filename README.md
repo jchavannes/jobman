@@ -4,12 +4,12 @@ Jobman
 Pseudo Supervisor / Gearman combo
 
 ```sh
-> node superman.js
+> node jobman.js
 Server listening on port: 8124
-Started process: php /var/gitrepos/superman/v2/worker.php
-Started process: php /var/gitrepos/superman/v2/worker.php
-Started process: php /var/gitrepos/superman/v1/worker.php
-Started process: php /var/gitrepos/superman/v1/worker.php
+Started process: php /var/gitrepos/jobman/v2/worker.php
+Started process: php /var/gitrepos/jobman/v2/worker.php
+Started process: php /var/gitrepos/jobman/v1/worker.php
+Started process: php /var/gitrepos/jobman/v1/worker.php
 ```
 ```sh
 > time php v1/client.php
